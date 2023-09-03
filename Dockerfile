@@ -1,43 +1,28 @@
-# syntax = docker/dockerfile:1
+# Based on https://github.com/denoland/deno_docker/blob/main/alpine.dockerfile
 
-# Adjust NODE_VERSION as desired
-ARG NODE_VERSION=17.9.1
-FROM node:${NODE_VERSION}-slim as base
+ARG DENO_VERSION=1.14.0
+ARG BIN_IMAGE=denoland/deno:bin-${DENO_VERSION}
+FROM ${BIN_IMAGE} AS bin
 
-LABEL fly_launch_runtime="Node.js"
+FROM frolvlad/alpine-glibc:alpine-3.13
 
-# Node.js app lives here
-WORKDIR /app
+RUN apk --no-cache add ca-certificates
 
-# Set production environment
-ENV NODE_ENV="production"
+RUN addgroup --gid 1000 deno \
+  && adduser --uid 1000 --disabled-password deno --ingroup deno \
+  && mkdir /deno-dir/ \
+  && chown deno:deno /deno-dir/
 
-# Install pnpm
-ARG PNPM_VERSION=8.3.0
-RUN npm install -g pnpm@$PNPM_VERSION
+ENV DENO_DIR /deno-dir/
+ENV DENO_INSTALL_ROOT /usr/local
 
+ARG DENO_VERSION
+ENV DENO_VERSION=${DENO_VERSION}
+COPY --from=bin /deno /bin/deno
 
-# Throw-away build stage to reduce size of final image
-FROM base as build
+WORKDIR /deno-dir
+COPY . .
 
-# Install packages needed to build node modules
-RUN apt-get update -qq && \
-    apt-get install -y build-essential pkg-config python-is-python3
-
-# Install node modules
-COPY --link package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-# Copy application code
-COPY --link . .
-
-
-# Final stage for app image
-FROM base
-
-# Copy built application
-COPY --from=build /app /app
-
-# Start the server by default, this can be overwritten at runtime
-EXPOSE 3000
-CMD [ "node", "index.js" ]
+ENTRYPOINT ["/bin/deno"]
+CMD ["run", "--allow-net", "https://deno.land/std/examples/echo_server.ts"]
+# CMD ["run", "--allow-net", "https://deno.land/std/examples/echo_server.ts"]

@@ -1,4 +1,4 @@
-# fly.toml app configuration file generated for network-delay-api on 2023-09-04T06:11:36+09:00
+# fly.toml app configuration file generated for network-delay-api on 2023-09-04T06:24:07+09:00
 #
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
@@ -8,8 +8,14 @@ primary_region = "nrt"
 
 [build]
 
+[env]
+  PORT = "8080"
+
+[processes]
+  app = "run --allow-net ./main.ts"
+
 [http_service]
-  internal_port = 3000
+  internal_port = 8080
   force_https = true
   auto_stop_machines = true
   auto_start_machines = true
