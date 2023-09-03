@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+      "target": "esnext",
+      "module": "esnext",
+      "baseUrl": ".",
+      "moduleResolution": "node",
+      "paths": {
+        "deno": ["./types/deno.d.ts"],
+        "https://*": [
+          "../../../.cache/deno/deps/https/*"
+        ],
+        "http://*": [
+          "../../../.cache/deno/deps/http/*"
+        ]
+      },
+     "plugins": [{ "name": "typescript-deno-plugin" }],
+     "allowImportingTsExtensions": true
+    }
+  }
+  
